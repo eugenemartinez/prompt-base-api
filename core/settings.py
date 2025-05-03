@@ -56,16 +56,16 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',    # <<< CORRECT POSITION
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "corsheaders.middleware.CorsMiddleware", # Add CORS middleware here (high up)
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Add ratelimit middleware (usually after auth/session if using user-based keys)
     'django_ratelimit.middleware.RatelimitMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',    # Add Whitenoise here
+    # 'whitenoise.middleware.WhiteNoiseMiddleware', # <<< REMOVE FROM HERE
 ]
 
 ROOT_URLCONF = "core.urls"
