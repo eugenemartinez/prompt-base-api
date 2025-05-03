@@ -5,6 +5,9 @@ from rest_framework.exceptions import PermissionDenied, NotFound
 from django.shortcuts import get_object_or_404
 from django.db.models import Q # For search queries
 import random
+from django.db import connection
+from django.db.utils import OperationalError
+from django.utils.decorators import method_decorator
 
 # Import models and serializers
 from .models import Prompt, Comment
@@ -32,6 +35,8 @@ from django_ratelimit.decorators import ratelimit
 
 # --- Prompt Views ---
 
+# Apply decorator to dispatch for CBVs
+@method_decorator(ratelimit(key='ip', rate='50/d', method='POST', block=True), name='dispatch')
 class PromptListCreateView(generics.ListCreateAPIView):
     """
     GET /api/prompts/ : List all prompts (paginated, searchable, filterable by tags, sortable)
@@ -45,13 +50,12 @@ class PromptListCreateView(generics.ListCreateAPIView):
             return PromptSerializer # Use full serializer for create (includes modification_code write_only)
         return PromptListSerializer # Use lighter serializer for list view
 
-    # Apply rate limiting to the POST method
-    @ratelimit(key='ip', rate='50/d', method='POST', block=True)
+    # Remove decorator from post
     def post(self, request, *args, **kwargs):
-        # Need to check ratelimit status explicitly when decorating dispatch methods like post
-        was_limited = getattr(request, 'limited', False)
-        if was_limited:
-            return Response({"detail": "Rate limit exceeded. Please try again later."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        # Remove the manual check, decorator on dispatch handles it
+        # was_limited = getattr(request, 'limited', False)
+        # if was_limited:
+        #     return Response({"detail": "Rate limit exceeded. Please try again later."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
         return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
@@ -110,6 +114,7 @@ class PromptDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET    /api/prompts/:promptid/ : Retrieve a single prompt (with comments)
     PUT    /api/prompts/:promptid/ : Update a prompt (requires modification_code)
+    PATCH  /api/prompts/:promptid/ : Partially update a prompt (requires modification_code)
     DELETE /api/prompts/:promptid/ : Delete a prompt (requires modification_code)
     """
     queryset = Prompt.objects.all()
@@ -125,12 +130,9 @@ class PromptDetailView(generics.RetrieveUpdateDestroyAPIView):
             raise PermissionDenied("Invalid modification code.")
         return True # Code is valid
 
-    # Apply rate limiting to PUT and DELETE methods
-    @ratelimit(key='ip', rate='50/d', method=['PUT', 'DELETE'], block=True)
+    # Remove decorators from put, patch, delete
     def put(self, request, *args, **kwargs):
-        was_limited = getattr(request, 'limited', False)
-        if was_limited:
-            return Response({"detail": "Rate limit exceeded."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        # Remove the manual check
         instance = self.get_object()
         self.check_modification_code(request, instance)
         # Prevent username update via PUT
@@ -138,12 +140,8 @@ class PromptDetailView(generics.RetrieveUpdateDestroyAPIView):
              request.data.pop('username') # Or handle more gracefully
         return super().update(request, *args, **kwargs)
 
-    @ratelimit(key='ip', rate='50/d', method=['PUT', 'DELETE'], block=True)
     def patch(self, request, *args, **kwargs):
-        # Also apply to PATCH if you allow partial updates
-        was_limited = getattr(request, 'limited', False)
-        if was_limited:
-            return Response({"detail": "Rate limit exceeded."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        # Remove the manual check
         instance = self.get_object()
         self.check_modification_code(request, instance)
         # Prevent username update via PATCH
@@ -151,21 +149,13 @@ class PromptDetailView(generics.RetrieveUpdateDestroyAPIView):
              request.data.pop('username')
         return super().partial_update(request, *args, **kwargs)
 
-    @ratelimit(key='ip', rate='50/d', method=['PUT', 'DELETE'], block=True)
     def delete(self, request, *args, **kwargs):
-        was_limited = getattr(request, 'limited', False)
-        if was_limited:
-            return Response({"detail": "Rate limit exceeded."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        # Remove the manual check
         instance = self.get_object()
-        # Modification code check for DELETE needs to happen BEFORE the object is deleted.
-        # We get it from the request body, not URL params.
-        # DRF's DestroyModelMixin doesn't easily allow checking request.data before deletion.
-        # So, we override delete() completely.
         try:
             self.check_modification_code(request, instance)
         except PermissionDenied as e:
             return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
-
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -200,6 +190,8 @@ class PromptDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 # --- Comment Views ---
 
+# Apply decorator to dispatch for CBVs
+@method_decorator(ratelimit(key='ip', rate='50/d', method='POST', block=True), name='dispatch')
 class CommentListCreateView(generics.ListCreateAPIView):
     """
     GET /api/prompts/:promptid/comments : List comments for a specific prompt (paginated)
@@ -217,12 +209,9 @@ class CommentListCreateView(generics.ListCreateAPIView):
         # PRD says descending (newest first) by default. Model Meta handles this.
         return Comment.objects.filter(prompt_id=prompt_id) # .order_by('created_at')
 
-    # Apply rate limiting to the POST method
-    @ratelimit(key='ip', rate='50/d', method='POST', block=True)
+    # Remove decorator from post
     def post(self, request, *args, **kwargs):
-        was_limited = getattr(request, 'limited', False)
-        if was_limited:
-            return Response({"detail": "Rate limit exceeded."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        # Remove the manual check
         return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
@@ -239,6 +228,8 @@ class CommentListCreateView(generics.ListCreateAPIView):
         # Relying on PRD flow for now.
 
 
+# Apply decorator to dispatch for CBVs
+@method_decorator(ratelimit(key='ip', rate='50/d', method=['PUT', 'PATCH', 'DELETE'], block=True), name='dispatch')
 class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET    /api/comments/:comment_id/ : Retrieve a single comment (Not in PRD, but included by default)
@@ -250,7 +241,6 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CommentSerializer
     lookup_field = 'comment_id' # Use UUID field for lookup
 
-    # Reuse or adapt the check_modification_code helper
     def check_modification_code(self, request, instance):
         """Helper to check modification code from request body."""
         code = request.data.get('modification_code')
@@ -261,12 +251,9 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
             raise PermissionDenied("Invalid modification code.")
         return True
 
-    # Apply rate limiting to PUT, PATCH, DELETE methods
-    @ratelimit(key='ip', rate='50/d', method=['PUT', 'PATCH', 'DELETE'], block=True)
+    # Remove decorators from put, patch, delete
     def put(self, request, *args, **kwargs):
-        was_limited = getattr(request, 'limited', False)
-        if was_limited:
-            return Response({"detail": "Rate limit exceeded."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        # Remove the manual check
         instance = self.get_object()
         self.check_modification_code(request, instance)
         # Prevent username update
@@ -274,11 +261,8 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
              request.data.pop('username')
         return super().update(request, *args, **kwargs)
 
-    @ratelimit(key='ip', rate='50/d', method=['PUT', 'PATCH', 'DELETE'], block=True)
     def patch(self, request, *args, **kwargs):
-        was_limited = getattr(request, 'limited', False)
-        if was_limited:
-            return Response({"detail": "Rate limit exceeded."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        # Remove the manual check
         instance = self.get_object()
         self.check_modification_code(request, instance)
         # Prevent username update
@@ -286,18 +270,13 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
              request.data.pop('username')
         return super().partial_update(request, *args, **kwargs)
 
-    @ratelimit(key='ip', rate='50/d', method=['PUT', 'PATCH', 'DELETE'], block=True)
     def delete(self, request, *args, **kwargs):
-        was_limited = getattr(request, 'limited', False)
-        if was_limited:
-            return Response({"detail": "Rate limit exceeded."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        # Remove the manual check
         instance = self.get_object()
-        # Check code before deletion
         try:
             self.check_modification_code(request, instance)
         except PermissionDenied as e:
             return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
-
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -391,5 +370,38 @@ class BatchPromptView(views.APIView):
         response_serializer = PromptListSerializer(prompts, many=True)
 
         return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+# --- Root API View ---
+
+class ApiRootView(views.APIView):
+    """
+    GET /api/ : Basic status check for the API.
+    """
+    # No rate limiting needed for root check
+    def get(self, request, *args, **kwargs):
+        db_status = "ok"
+        db_error = None
+        try:
+            # Optional: Perform a simple database check
+            connection.ensure_connection()
+            # Or try a simple query like Prompt.objects.count()
+        except OperationalError as e:
+            db_status = "error"
+            db_error = str(e)
+            # Log the error for debugging on Vercel
+            print(f"Database connection error: {e}") # Vercel logs this
+
+        status_data = {
+            "status": "ok",
+            "message": "PromptBase API is running.",
+            "database_connection": db_status
+        }
+        if db_error:
+            status_data["database_error"] = db_error
+
+        response_status = status.HTTP_200_OK if db_status == "ok" else status.HTTP_503_SERVICE_UNAVAILABLE
+
+        return Response(status_data, status=response_status)
 
 # End of views.py

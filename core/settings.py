@@ -11,9 +11,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-import os                 # Add this import
-import dj_database_url    # Add this import
-from dotenv import load_dotenv # Add this import
+import os                 
+import dj_database_url    
+from dotenv import load_dotenv
+import ssl
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -108,6 +109,7 @@ if not DATABASES['default']:
 
 # Cache Configuration (Using Upstash Redis via django-redis)
 REDIS_URL = os.environ.get('REDIS_URL')
+print(f"DEBUG: REDIS_URL read from environment: '{REDIS_URL}'") # Add this line
 
 if REDIS_URL:
     CACHES = {
@@ -117,10 +119,14 @@ if REDIS_URL:
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
                 # Upstash often requires SSL connection
-                "CONNECTION_POOL_KWARGS": {"ssl_cert_reqs": None}
+                "CONNECTION_POOL_KWARGS": {
+                    "ssl_cert_reqs": ssl.CERT_REQUIRED, # Use ssl.CERT_REQUIRED
+                    "ssl_check_hostname": True,         # Explicitly set to True
+                }
             }
         }
     }
+    RATELIMIT_USE_CACHE = 'default'
 else:
     # Fallback for local development if REDIS_URL is not set
     # (You could keep the LocMemCache or FileBasedCache here if desired,
@@ -132,6 +138,7 @@ else:
             'LOCATION': 'local-dev-fallback-cache',
         }
     }
+    RATELIMIT_USE_CACHE = 'default'
 
 # Django Ratelimit Settings
 RATELIMIT_USE_CACHE = 'default' # This will now use the Redis cache via django-redis

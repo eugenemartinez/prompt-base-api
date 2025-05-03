@@ -54,24 +54,29 @@ class Prompt(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        # Generate username if blank on first save
-        if not self.pk and not self.username: # Check if it's a new instance and username is blank
+        is_new = self._state.adding # Use this to check if it's a new instance
+
+        # Generate username if blank on first save (when is_new is True)
+        if is_new and not self.username:
             self.username = generate_username()
-            # Ensure generated username doesn't exceed max_length (unlikely but safe)
             if len(self.username) > 50:
                  self.username = self.username[:50]
 
-        # Generate modification code on first save
-        if not self.pk and not self.modification_code: # Check if it's a new instance
+        # Generate modification code on first save (when is_new is True)
+        if is_new: # No need to check if self.modification_code exists, always generate for new
             self.modification_code = generate_modification_code()
 
-        # Prevent username update after creation (double check)
-        if self.pk: # If instance already exists (has a primary key)
-            original = Prompt.objects.get(pk=self.pk)
-            if original.username != self.username:
-                 # Optionally raise an error or just reset it
-                 self.username = original.username
-                 # raise ValidationError("Username cannot be changed after creation.")
+        # Prevent username update after creation
+        if not is_new: # Only run this block if it's an UPDATE (not new)
+            try:
+                # Fetch the original state from the database
+                original = Prompt.objects.get(pk=self.pk)
+                if original.username != self.username:
+                     # Reset username if it was changed during update
+                     self.username = original.username
+            except Prompt.DoesNotExist:
+                # This case should ideally not happen during an update, but handle defensively
+                pass
 
         super().save(*args, **kwargs) # Call the "real" save() method.
 
@@ -93,21 +98,26 @@ class Comment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
+        is_new = self._state.adding # Use this to check if it's a new instance
+
         # Generate username if blank on first save
-        if not self.pk and not self.username:
+        if is_new and not self.username:
             self.username = generate_username()
             if len(self.username) > 50:
                  self.username = self.username[:50]
 
         # Generate modification code on first save
-        if not self.pk and not self.modification_code:
+        if is_new:
             self.modification_code = generate_modification_code()
 
         # Prevent username update after creation
-        if self.pk:
-            original = Comment.objects.get(pk=self.pk)
-            if original.username != self.username:
-                 self.username = original.username
+        if not is_new: # Only run this block if it's an UPDATE
+            try:
+                original = Comment.objects.get(pk=self.pk)
+                if original.username != self.username:
+                     self.username = original.username
+            except Comment.DoesNotExist:
+                pass
 
         super().save(*args, **kwargs)
 

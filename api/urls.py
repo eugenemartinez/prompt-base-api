@@ -2,6 +2,9 @@ from django.urls import path
 from . import views # Import views from the current app
 
 urlpatterns = [
+    # Root API view (add this first)
+    path('', views.ApiRootView.as_view(), name='api-root'),
+
     # Prompt URLs
     path('prompts/', views.PromptListCreateView.as_view(), name='prompt-list-create'),
     # Specific paths like 'random' and 'batch' should come BEFORE the general <uuid:prompt_id> path
