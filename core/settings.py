@@ -12,29 +12,24 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os                 
-import dj_database_url    
 from dotenv import load_dotenv
+import dj_database_url
 import ssl
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env file
-load_dotenv(BASE_DIR / '.env') # Add this line, specifying the path relative to BASE_DIR
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+load_dotenv(BASE_DIR / '.env')
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# It's recommended to load this from an environment variable as well
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-=_=dl3zd6$&uhb8acosjugujlhzgsyugmp8np$$0iu5i*)lf68')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# Load DEBUG from env var, default to True for development
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+print(f"--- DEBUG setting value: {DEBUG} (Type: {type(DEBUG)}) ---")
 
 # Configure ALLOWED_HOSTS based on environment
-# For Vercel, you'll need to add your deployment URL later
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 
@@ -109,40 +104,42 @@ if not DATABASES['default']:
 
 # Cache Configuration (Using Upstash Redis via django-redis)
 REDIS_URL = os.environ.get('REDIS_URL')
-print(f"DEBUG: REDIS_URL read from environment: '{REDIS_URL}'") # Add this line
 
+# --- KEEP THE FOLLOWING if/else BLOCK ---
 if REDIS_URL:
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": REDIS_URL, # Use the full URL from the environment variable
+            "LOCATION": REDIS_URL,
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
-                # Upstash often requires SSL connection
+                # Add SSL options for Upstash/Redis Cloud
                 "CONNECTION_POOL_KWARGS": {
-                    "ssl_cert_reqs": ssl.CERT_REQUIRED, # Use ssl.CERT_REQUIRED
-                    "ssl_check_hostname": True,         # Explicitly set to True
+                    "ssl_cert_reqs": ssl.CERT_REQUIRED # <<< CORRECTED VALUE
+                    # "ssl_check_hostname": False, # Try adding this if CERT_REQUIRED alone doesn't work
                 }
             }
         }
     }
-    RATELIMIT_USE_CACHE = 'default'
 else:
-    # Fallback for local development if REDIS_URL is not set
-    # (You could keep the LocMemCache or FileBasedCache here if desired,
-    # but since you have REDIS_URL in .env, this 'else' might not be hit locally)
-    print("WARNING: REDIS_URL not found in environment. Falling back to LocMemCache.")
+    # Fallback to local memory cache if REDIS_URL is not set
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'local-dev-fallback-cache',
+            'LOCATION': 'unique-snowflake', # Just needs a name
         }
     }
-    RATELIMIT_USE_CACHE = 'default'
+# --- END OF BLOCK TO KEEP ---
 
-# Django Ratelimit Settings
-RATELIMIT_USE_CACHE = 'default' # This will now use the Redis cache via django-redis
-
+# --- Rate Limiting ---
+RATELIMIT_CACHE_BACKEND = 'default'
+RATELIMIT_ENABLE = not DEBUG
+print(f"--- RATELIMIT_ENABLE setting value: {RATELIMIT_ENABLE} ---")
+RATELIMIT_KEY_PREFIX = "rl"
+RATELIMIT_GROUP_PREFIX = "rlg"
+RATELIMIT_BLOCK = True
+RATELIMIT_VIEW = 'api.views.ratelimited_error' # Point to our custom function
+# --- END REPLACEMENT ---
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -187,10 +184,61 @@ STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
 # PREVIOUSLY: 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
+# --- ADD THIS LINE TO SILENCE THE CHECK IN DEBUG MODE ---
+SILENCED_SYSTEM_CHECKS = ['django_ratelimit.E003'] if DEBUG else []
+# --- END ADDITION ---
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --- REPLACE previous LOGGING config with this ---
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': { # Optional: Add a formatter for clearer logs
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': { # Add a simple formatter if needed elsewhere
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG', # Set console handler level to DEBUG
+            'formatter': 'verbose', # Use the verbose formatter
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO', # Keep root at INFO generally
+    },
+    'loggers': {
+         'django.request': { # Keep logging request errors
+             'handlers': ['console'],
+             'level': 'ERROR',
+             'propagate': False,
+         },
+         # --- ADD/MODIFY THESE ---
+         'django_redis': {
+             'handlers': ['console'],
+             'level': 'DEBUG', # Show detailed cache operations
+             'propagate': False, # Don't pass up to root
+         },
+         'django_ratelimit': {
+             'handlers': ['console'],
+             'level': 'DEBUG', # Show detailed rate limit checks
+             'propagate': False, # Don't pass up to root
+         }
+         # --- END ADDITION/MODIFICATION ---
+    }
+}
+# --- END REPLACEMENT ---
 
 # CORS Settings (adjust as needed for production)
 CORS_ALLOW_ALL_ORIGINS = DEBUG # Allow all origins only in DEBUG mode
@@ -205,6 +253,3 @@ CORS_ALLOW_ALL_ORIGINS = DEBUG # Allow all origins only in DEBUG mode
 #     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
 #     'PAGE_SIZE': 10
 # }
-
-# Django Ratelimit Settings (basic example, keys/rates defined in views)
-RATELIMIT_USE_CACHE = 'default' # Use default Django cache
