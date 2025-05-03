@@ -49,10 +49,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third-party apps
     'rest_framework',
+    'api',
     'corsheaders',
     'django_ratelimit',
-    # Your apps
-    'api',
 ]
 
 MIDDLEWARE = [
@@ -66,6 +65,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # Add ratelimit middleware (usually after auth/session if using user-based keys)
     'django_ratelimit.middleware.RatelimitMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',    # Add Whitenoise here
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -176,11 +176,15 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
+# https://docs.djangoproject.com/en/stable/howto/static-files/
 
 STATIC_URL = "static/"
 # Add STATIC_ROOT for production deployments (e.g., Vercel)
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Storage backend that compresses files and adds unique hashes
+# Recommended for use with Whitenoise
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # Default primary key field type
