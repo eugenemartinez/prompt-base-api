@@ -179,12 +179,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/stable/howto/static-files/
 
 STATIC_URL = "static/"
-# Add STATIC_ROOT for production deployments (e.g., Vercel)
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / 'staticfiles' # Keep STATIC_ROOT defined, Whitenoise might still use it internally
 
-# Storage backend that compresses files and adds unique hashes
-# Recommended for use with Whitenoise
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# CHANGE THE STORAGE BACKEND:
+# Use a simpler storage that doesn't require the manifest from collectstatic
+STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
+# PREVIOUSLY: 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # Default primary key field type
