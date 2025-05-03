@@ -17,10 +17,17 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings # Import settings
 
+# Define base URL patterns (always active)
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("api/", include("api.urls", namespace='api')),
+    path('api/', include('api.urls')), # Your API urls
 ]
+
+# Conditionally add the admin URL pattern if DEBUG is True
+if settings.DEBUG:
+    urlpatterns += [
+        path('admin/', admin.site.urls),
+    ]
 
 # Make sure no other code follows this urlpatterns definition

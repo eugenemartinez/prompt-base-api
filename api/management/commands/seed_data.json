@@ -1,0 +1,54 @@
+{
+  "prompts": [
+    {
+      "title": "Creative Story Starter",
+      "content": "You wake up in a world where gravity works in reverse only on Tuesdays. Describe your first Tuesday.",
+      "tags": ["fiction", "creative-writing", "sci-fi"]
+    },
+    {
+      "title": "Python Code Challenge: Palindrome",
+      "content": "Write a Python function that checks if a given string is a palindrome (reads the same forwards and backward), ignoring spaces and capitalization.",
+      "tags": ["python", "coding-challenge", "algorithms"]
+    },
+    {
+      "title": "Recipe Idea: Quick Weeknight Pasta",
+      "content": "Need a fast dinner? Combine cooked pasta with cherry tomatoes, garlic, olive oil, basil, and a pinch of red pepper flakes. What variations can you think of?",
+      "tags": ["recipe", "cooking", "pasta", "quick-meal"]
+    },
+    {
+      "title": "Empty Prompt for Testing",
+      "content": "This prompt intentionally has no comments yet.",
+      "tags": ["testing"]
+    }
+  ],
+  "comments": [
+    {
+      "prompt_title": "Creative Story Starter",
+      "content": "Floating to the ceiling was weird at first, but coffee was the real challenge!"
+    },
+    {
+      "prompt_title": "Creative Story Starter",
+      "content": "My cat did NOT enjoy reverse gravity Tuesday."
+    },
+    {
+      "prompt_title": "Python Code Challenge: Palindrome",
+      "content": "Here's my solution: `def is_palindrome(s): s = ''.join(filter(str.isalnum, s)).lower(); return s == s[::-1]`"
+    },
+    {
+      "prompt_title": "Python Code Challenge: Palindrome",
+      "content": "Don't forget edge cases like empty strings or single characters!"
+    },
+    {
+      "prompt_title": "Recipe Idea: Quick Weeknight Pasta",
+      "content": "Adding some feta cheese at the end is delicious!"
+    },
+    {
+      "prompt_title": "Recipe Idea: Quick Weeknight Pasta",
+      "content": "I like to add spinach and mushrooms too."
+    },
+    {
+      "prompt_title": "Recipe Idea: Quick Weeknight Pasta",
+      "content": "A squeeze of lemon juice brightens it up."
+    }
+  ]
+}

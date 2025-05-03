@@ -240,16 +240,34 @@ LOGGING = {
 }
 # --- END REPLACEMENT ---
 
-# CORS Settings (adjust as needed for production)
+# CORS Settings
 CORS_ALLOW_ALL_ORIGINS = DEBUG # Allow all origins only in DEBUG mode
-# Or, specify allowed origins for production:
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:5173", # Your Vite dev server
-#     "https://your-vercel-frontend-url.vercel.app", # Your deployed frontend
-# ]
 
-# Django REST Framework Settings (optional for now, can add pagination later)
-# REST_FRAMEWORK = {
-#     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-#     'PAGE_SIZE': 10
-# }
+# If NOT in DEBUG mode, read allowed origins from environment variable
+if not DEBUG:
+    allowed_origins_str = os.environ.get('CORS_ALLOWED_ORIGINS')
+    if allowed_origins_str:
+        CORS_ALLOWED_ORIGINS = allowed_origins_str.split(',')
+    else:
+        # Fallback or raise an error if not set in production
+        print("WARNING: CORS_ALLOWED_ORIGINS environment variable not set in production!")
+        CORS_ALLOWED_ORIGINS = [
+            # Add essential production origins here as a last resort,
+            # but ideally, it should always be set via environment variable.
+            # "https://your-vercel-frontend-url.vercel.app",
+        ]
+
+# --- Keep this commented block as a reminder/example ---
+# # Example structure for CORS_ALLOWED_ORIGINS list:
+# CORS_ALLOWED_ORIGINS_EXAMPLE = [
+#     "http://localhost:5173", # Vite dev server
+#     "https://your-vercel-frontend-url.vercel.app", # Deployed frontend
+# ]
+# --- End reminder block ---
+
+
+# Django REST Framework Settings
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10
+}
