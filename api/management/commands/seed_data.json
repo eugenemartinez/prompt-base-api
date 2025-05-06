@@ -1,54 +1,460 @@
 {
   "prompts": [
     {
-      "title": "Creative Story Starter",
-      "content": "You wake up in a world where gravity works in reverse only on Tuesdays. Describe your first Tuesday.",
-      "tags": ["fiction", "creative-writing", "sci-fi"]
+      "title": "React useEffect Infinite Loop Debugging",
+      "content": "I have a React component using `useEffect` to fetch data based on a prop `userId`. However, it seems to be causing an infinite loop of requests. Here's the simplified code: `useEffect(() => { fetchData(userId); }, [userId, fetchData]);`. The `fetchData` function is defined within the component. What's causing the loop and how can I fix it?",
+      "tags": ["react", "javascript", "debugging", "useeffect", "frontend"]
     },
     {
-      "title": "Python Code Challenge: Palindrome",
-      "content": "Write a Python function that checks if a given string is a palindrome (reads the same forwards and backward), ignoring spaces and capitalization.",
-      "tags": ["python", "coding-challenge", "algorithms"]
+      "title": "SQL Query Optimization for Large Tables",
+      "content": "My SQL query `SELECT * FROM orders WHERE customer_id = 123 AND order_date > '2024-01-01'` is running very slowly on a large `orders` table (millions of rows). What are the common strategies to optimize this query? Should I add indexes? If so, on which columns?",
+      "tags": ["sql", "database", "optimization", "performance", "backend", "indexing"]
     },
     {
-      "title": "Recipe Idea: Quick Weeknight Pasta",
-      "content": "Need a fast dinner? Combine cooked pasta with cherry tomatoes, garlic, olive oil, basil, and a pinch of red pepper flakes. What variations can you think of?",
-      "tags": ["recipe", "cooking", "pasta", "quick-meal"]
+      "title": "Git Branching Strategy for Team Projects",
+      "content": "Our team is starting a new project and we need a solid Git branching strategy. We're considering Gitflow, GitHub Flow, or something simpler. What are the pros and cons of each, and what's generally recommended for a small-to-medium sized team working on a web application?",
+      "tags": ["git", "version-control", "branching", "workflow", "collaboration", "devops"]
     },
     {
-      "title": "Empty Prompt for Testing",
-      "content": "This prompt intentionally has no comments yet.",
-      "tags": ["testing"]
+      "title": "CSS Centering a Div Horizontally and Vertically",
+      "content": "What are the most reliable and modern CSS techniques to center a `div` element both horizontally and vertically within its parent container? Please provide examples using Flexbox and Grid.",
+      "tags": ["css", "html", "frontend", "layout", "flexbox", "grid", "styling"]
+    },
+    {
+      "title": "Python Dictionary Comprehension Example",
+      "content": "How can I use Python dictionary comprehension to create a new dictionary from an existing list of numbers, where the keys are the numbers and the values are their squares? For example, starting with `[1, 2, 3]`, I want to get `{1: 1, 2: 4, 3: 9}`.",
+      "tags": ["python", "dictionary", "comprehension", "data-structures", "programming"]
+    },
+    {
+      "title": "Basic Dockerfile for a Python Web App",
+      "content": "I need to create a simple Dockerfile for a Python Flask/Django web application. What are the essential commands needed? Should include setting the working directory, copying requirements, installing dependencies, copying application code, and specifying the command to run the app.",
+      "tags": ["docker", "python", "backend", "deployment", "devops", "flask", "django"]
+    },
+    {
+      "title": "Understanding JavaScript Async/Await",
+      "content": "Can someone explain JavaScript's `async` and `await` keywords in simple terms? How do they relate to Promises, and why are they useful for handling asynchronous operations like API calls?",
+      "tags": ["javascript", "async-await", "promises", "asynchronous", "frontend", "backend", "es6"]
+    },
+    {
+      "title": "Key Principles of RESTful API Design",
+      "content": "What are the fundamental principles of designing a good RESTful API? Concepts like statelessness, resource naming, use of HTTP methods (GET, POST, PUT, DELETE), and status codes seem important. Any best practices?",
+      "tags": ["rest", "api", "design", "backend", "http", "architecture", "web-development"]
+    },
+    {
+      "title": "How to Debug CORS Errors (Cross-Origin Resource Sharing)",
+      "content": "I'm getting CORS errors in my browser's console when my frontend (running on localhost:3000) tries to fetch data from my backend API (running on localhost:8000). What causes these errors, and how do I configure my backend (e.g., Django/Express) to allow requests from my frontend origin?",
+      "tags": ["cors", "debugging", "frontend", "backend", "web-security", "http", "api"]
+    },
+    {
+      "title": "Getting Started with Pytest for Unit Testing",
+      "content": "I want to start writing unit tests for my Python code using `pytest`. How do I structure my tests? How do I write a simple test function, make assertions, and run the tests? Any examples for testing a basic function?",
+      "tags": ["python", "testing", "unit-testing", "pytest", "tdd", "quality-assurance"]
+    },
+    {
+      "title": "TypeScript Basic Types vs. Interfaces",
+      "content": "When should I use basic types (like `string`, `number`, `boolean`) versus defining an `interface` or `type` alias in TypeScript? What are the advantages of using interfaces for complex object shapes?",
+      "tags": ["typescript", "types", "interface", "frontend", "backend", "programming"]
+    },
+    {
+      "title": "Securely Managing Environment Variables in Node.js/Python",
+      "content": "What's the best practice for managing sensitive environment variables (like API keys, database passwords) in a Node.js or Python application? Should I use `.env` files? How do I avoid committing secrets to Git?",
+      "tags": ["environment-variables", "security", "nodejs", "python", "backend", "devops", "dotenv"]
+    },
+    {
+      "title": "What is the N+1 Query Problem in ORMs?",
+      "content": "I keep hearing about the 'N+1 query problem' when using ORMs like Django ORM or SQLAlchemy. What exactly is this problem, and how does it impact database performance? How can I detect and fix it using techniques like `select_related` or `prefetch_related`?",
+      "tags": ["database", "orm", "sql", "performance", "optimization", "backend", "django", "sqlalchemy", "n+1"]
+    },
+    {
+      "title": "Understanding CSS Specificity Rules",
+      "content": "My CSS rules aren't applying as expected. I think it might be due to specificity. Can someone explain how CSS specificity is calculated (inline styles, IDs, classes, elements)? How can I override styles effectively without resorting to `!important`?",
+      "tags": ["css", "specificity", "frontend", "styling", "debugging", "web-development"]
+    },
+    {
+      "title": "Why Use Python Virtual Environments (venv)?",
+      "content": "Why is it recommended to use virtual environments (`venv`, `conda`, etc.) for Python projects? What problems do they solve regarding dependencies and project isolation? How do I create and activate a basic `venv` environment?",
+      "tags": ["python", "virtualenv", "venv", "dependencies", "environment", "packaging", "best-practices"]
+    },
+    {
+      "title": "Basic JWT Authentication Workflow",
+      "content": "Describe the typical workflow for user authentication using JSON Web Tokens (JWT). How does the server generate a token upon login, how does the client store and send it, and how does the server validate it on subsequent requests?",
+      "tags": ["authentication", "jwt", "security", "api", "backend", "frontend", "web-development"]
+    },
+    {
+      "title": "Choosing a React State Management Library",
+      "content": "Beyond `useState` and `useReducer`, what are the popular options for managing global or complex state in React applications (e.g., Context API, Redux, Zustand, Jotai)? What are the trade-offs to consider when choosing one?",
+      "tags": ["react", "state-management", "frontend", "javascript", "redux", "zustand", "context-api", "architecture"]
+    },
+    {
+      "title": "What Are Database Migrations and Why Use Them?",
+      "content": "What is the purpose of database migrations in frameworks like Django or Ruby on Rails? How do they help manage database schema changes over time, especially when working in a team?",
+      "tags": ["database", "migrations", "schema", "backend", "django", "rails", "version-control", "devops"]
+    },
+    {
+      "title": "Basic Principles of Web Accessibility (a11y)",
+      "content": "What are some fundamental principles of web accessibility (a11y)? Why is it important to make websites accessible? Provide examples like using semantic HTML, providing alt text for images, and ensuring keyboard navigation.",
+      "tags": ["accessibility", "a11y", "html", "frontend", "web-development", "ux", "inclusive-design"]
+    },
+    {
+      "title": "Basic Linux Commands for File System Navigation",
+      "content": "What are the essential Linux command line commands for navigating the file system? Explain `pwd`, `ls`, `cd`, including how to go up a directory (`cd ..`) and to the home directory (`cd ~` or just `cd`).",
+      "tags": ["linux", "command-line", "bash", "terminal", "navigation", "devops", "server"]
+    },
+    {
+      "title": "Basic Linux Commands for File Manipulation",
+      "content": "Following up on navigation, what are the basic Linux commands for creating, copying, moving/renaming, and deleting files and directories? Explain `touch`, `mkdir`, `cp`, `mv`, `rm`, and `rmdir` with simple examples.",
+      "tags": ["linux", "command-line", "bash", "terminal", "file-system", "devops", "server"]
+    },
+    {
+      "title": "The CSS Box Model Explained",
+      "content": "Explain the CSS Box Model. What are the different parts (content, padding, border, margin) and how do they affect the layout and sizing of an HTML element? How does the `box-sizing` property change this behavior?",
+      "tags": ["css", "box-model", "layout", "frontend", "styling", "html", "web-development"]
+    },
+    {
+      "title": "JavaScript Promises vs. Callbacks for Async Operations",
+      "content": "What are the main differences between using traditional callbacks and using Promises for handling asynchronous operations in JavaScript? Why are Promises generally preferred in modern JavaScript?",
+      "tags": ["javascript", "promises", "callbacks", "asynchronous", "es6", "frontend", "backend", "nodejs"]
+    },
+    {
+      "title": "Explaining Different SQL JOIN Types",
+      "content": "Explain the common types of SQL JOINs: `INNER JOIN`, `LEFT JOIN` (or `LEFT OUTER JOIN`), `RIGHT JOIN` (or `RIGHT OUTER JOIN`), and `FULL OUTER JOIN`. Provide simple examples of when to use each.",
+      "tags": ["sql", "database", "joins", "querying", "backend", "data-analysis"]
+    },
+    {
+      "title": "React Functional Component Lifecycle with Hooks",
+      "content": "How do you replicate traditional class component lifecycle methods (like `componentDidMount`, `componentDidUpdate`, `componentWillUnmount`) in React functional components using Hooks, primarily `useEffect`?",
+      "tags": ["react", "hooks", "useeffect", "lifecycle", "functional-components", "frontend", "javascript"]
+    },
+    {
+      "title": "Common API Rate Limiting Techniques",
+      "content": "What is API rate limiting and why is it important? Describe common strategies for implementing rate limiting on a backend API (e.g., token bucket, leaky bucket, fixed window counter).",
+      "tags": ["api", "rate-limiting", "backend", "security", "performance", "architecture", "web-development"]
+    },
+    {
+      "title": "Git Merge vs. Rebase: Pros and Cons",
+      "content": "Explain the difference between `git merge` and `git rebase` when integrating changes from one branch into another. What are the advantages and disadvantages of each approach? When might you prefer one over the other?",
+      "tags": ["git", "version-control", "merge", "rebase", "branching", "workflow", "collaboration"]
+    },
+    {
+      "title": "Basic Python Error Handling with Try/Except",
+      "content": "How do you handle potential errors gracefully in Python using `try`, `except`, `else`, and `finally` blocks? Provide a simple example, like handling a `ZeroDivisionError` or `FileNotFoundError`.",
+      "tags": ["python", "error-handling", "exceptions", "try-except", "programming", "best-practices"]
+    },
+    {
+      "title": "What Are WebSockets and When to Use Them?",
+      "content": "What are WebSockets? How do they differ from traditional HTTP requests? In what scenarios are they particularly useful (e.g., real-time chat, live notifications, multiplayer games)?",
+      "tags": ["websockets", "real-time", "networking", "web-development", "api", "backend", "frontend"]
+    },
+    {
+      "title": "Core Concepts of Responsive Web Design",
+      "content": "What are the core principles of responsive web design? Explain concepts like fluid grids, flexible images, and media queries. Why is designing for different screen sizes crucial today?",
+      "tags": ["responsive-design", "css", "html", "frontend", "web-development", "mobile-first", "media-queries", "layout"]
+    },
+    {
+      "title": "Understanding Idempotent HTTP Methods",
+      "content": "Explain the concept of idempotency in the context of HTTP methods. Which common methods (GET, POST, PUT, DELETE, PATCH) are typically considered idempotent, and why is this important for API design and client behavior (e.g., retries)?",
+      "tags": ["http", "rest", "api", "idempotency", "backend", "web-development", "architecture"]
+    },
+    {
+      "title": "What is CI/CD (Continuous Integration/Continuous Deployment)?",
+      "content": "Explain the concepts of Continuous Integration (CI) and Continuous Deployment/Delivery (CD). What are the benefits of implementing a CI/CD pipeline for a software project? Mention common tools like Jenkins, GitLab CI, GitHub Actions.",
+      "tags": ["ci-cd", "devops", "automation", "testing", "deployment", "workflow", "best-practices"]
+    },
+    {
+      "title": "How to Prevent SQL Injection Vulnerabilities",
+      "content": "What is SQL Injection? How does it occur? What are the most effective ways to prevent SQL injection attacks in web applications, particularly when using ORMs or raw SQL queries (e.g., parameterized queries/prepared statements)?",
+      "tags": ["security", "sql-injection", "database", "backend", "web-security", "owasp", "best-practices"]
+    },
+    {
+      "title": "CSS Flexbox vs. Grid: When to Use Which?",
+      "content": "Both CSS Flexbox and Grid are powerful layout systems. What are the main differences between them? Provide general guidelines or examples for when Flexbox is more suitable (1-dimensional layout) versus when Grid is better (2-dimensional layout).",
+      "tags": ["css", "flexbox", "grid", "layout", "frontend", "styling", "web-development", "responsive-design"]
+    },
+    {
+      "title": "Understanding Python Generators and the `yield` Keyword",
+      "content": "What are Python generators and how do they differ from regular functions that return lists? Explain the role of the `yield` keyword. Why are generators useful, especially for working with large datasets or streams?",
+      "tags": ["python", "generators", "yield", "memory-management", "iteration", "programming", "performance"]
+    },
+    {
+      "title": "What is Serverless Computing? (e.g., AWS Lambda, Vercel Functions)",
+      "content": "Explain the concept of 'serverless' computing. What does it mean if you don't manage servers? What are the pros (scalability, cost) and cons (cold starts, vendor lock-in) of using serverless functions (like AWS Lambda, Google Cloud Functions, Vercel/Netlify Functions)?",
+      "tags": ["serverless", "cloud-computing", "aws-lambda", "faas", "backend", "architecture", "devops", "scalability"]
+    },
+    {
+      "title": "Optimizing React Components with `useMemo` and `useCallback`",
+      "content": "Explain the purpose of the `useMemo` and `useCallback` hooks in React. When should you use them to optimize performance by memoizing values or functions? Provide simple examples.",
+      "tags": ["react", "hooks", "usememo", "usecallback", "performance", "optimization", "frontend", "javascript"]
+    },
+    {
+      "title": "Fixing Common Git Mistakes (e.g., commit to wrong branch)",
+      "content": "What are some common mistakes developers make when using Git? How can you fix situations like committing to the wrong branch, needing to undo the last commit, or wanting to amend the previous commit message?",
+      "tags": ["git", "version-control", "debugging", "workflow", "collaboration", "common-errors"]
+    },
+    {
+      "title": "Data Structures: Arrays vs. Linked Lists",
+      "content": "Compare and contrast arrays (or dynamic arrays/lists in Python/JS) and linked lists. What are the performance characteristics (Big O notation) for common operations like accessing an element by index, insertion, and deletion in both data structures?",
+      "tags": ["data-structures", "algorithms", "performance", "big-o", "arrays", "linked-lists", "computer-science"]
+    },
+    {
+      "title": "Web Storage: localStorage vs. sessionStorage",
+      "content": "Explain the differences between `localStorage` and `sessionStorage` in web browsers. What data are they suitable for storing? What are the key distinctions regarding persistence, scope, and capacity?",
+      "tags": ["web-storage", "localstorage", "sessionstorage", "javascript", "frontend", "browser", "state-management"]
+    },
+    {
+      "title": "Explaining the JavaScript Event Loop",
+      "content": "Can someone explain the JavaScript Event Loop in simple terms? How do the call stack, callback queue (or task queue), and microtask queue interact to handle asynchronous code execution in browsers and Node.js?",
+      "tags": ["javascript", "event-loop", "asynchronous", "nodejs", "browser", "concurrency", "performance"]
+    },
+    {
+      "title": "Using Docker Compose for Local Development",
+      "content": "What is Docker Compose and how does it simplify running multi-container applications (e.g., a web app container and a database container) during local development? Provide a basic example `docker-compose.yml` structure.",
+      "tags": ["docker", "docker-compose", "containers", "devops", "local-development", "backend", "database"]
+    },
+    {
+      "title": "Common SQL Database Indexing Strategies",
+      "content": "Beyond basic single-column indexes, what are other indexing strategies used in SQL databases (e.g., composite indexes, covering indexes, partial indexes)? When might you use these different types to optimize queries?",
+      "tags": ["sql", "database", "indexing", "optimization", "performance", "backend", "querying"]
+    },
+    {
+      "title": "Difference Between CSS Pseudo-classes and Pseudo-elements",
+      "content": "What is the difference between CSS pseudo-classes (like `:hover`, `:focus`, `:nth-child`) and pseudo-elements (like `::before`, `::after`, `::first-line`)? Provide examples of each.",
+      "tags": ["css", "pseudo-classes", "pseudo-elements", "selectors", "frontend", "styling", "web-development"]
+    },
+    {
+      "title": "Understanding Python Decorators (`@`)",
+      "content": "What are Python decorators? How does the `@decorator` syntax work? Provide a simple example of creating and using a decorator, perhaps for logging function calls or timing execution.",
+      "tags": ["python", "decorators", "metaprogramming", "functions", "programming", "best-practices"]
+    },
+    {
+      "title": "Basic OAuth 2.0 Grant Flow (e.g., Authorization Code)",
+      "content": "Explain the basic steps involved in a common OAuth 2.0 flow, like the Authorization Code grant type, used for third-party authentication (e.g., 'Login with Google'). What roles do the client, resource owner, authorization server, and resource server play?",
+      "tags": ["oauth", "authentication", "authorization", "security", "api", "web-development", "backend"]
+    },
+    {
+      "title": "Using React Context API for Simpler State Sharing",
+      "content": "How can the React Context API be used to share state between components without prop drilling? Explain `createContext`, `Provider`, and `useContext`. When is it a good alternative to libraries like Redux?",
+      "tags": ["react", "context-api", "hooks", "state-management", "frontend", "javascript", "prop-drilling"]
+    },
+    {
+      "title": "Importance of Using Semantic HTML",
+      "content": "Why is it important to use semantic HTML elements (like `<article>`, `<nav>`, `<aside>`, `<header>`, `<footer>`) instead of just using `<div>` and `<span>` for everything? How does it benefit accessibility and SEO?",
+      "tags": ["html", "semantic-html", "accessibility", "seo", "frontend", "web-development", "best-practices"]
+    },
+    {
+      "title": "Hashing vs. Encryption: Key Differences",
+      "content": "What are the fundamental differences between hashing and encryption? Explain why hashing is typically used for password storage while encryption is used for protecting data in transit or at rest. Mention one-way vs. two-way processes.",
+      "tags": ["security", "cryptography", "hashing", "encryption", "passwords", "backend", "computer-science"]
+    },
+    {
+      "title": "Introduction to Microservices Architecture",
+      "content": "What is a microservices architecture? How does it contrast with a monolithic architecture? What are some potential benefits (e.g., independent scaling, technology diversity) and challenges (e.g., complexity, distributed transactions)?",
+      "tags": ["microservices", "architecture", "backend", "distributed-systems", "scalability", "devops", "design-patterns"]
     }
   ],
   "comments": [
     {
-      "prompt_title": "Creative Story Starter",
-      "content": "Floating to the ceiling was weird at first, but coffee was the real challenge!"
+      "content": "Make sure the `fetchData` function itself isn't being redefined on every render! If it's defined inside the component, wrap it in `useCallback` with its own dependencies. `useCallback(fetchData, [dependency1, dependency2])`",
+      "prompt_id": 1
     },
     {
-      "prompt_title": "Creative Story Starter",
-      "content": "My cat did NOT enjoy reverse gravity Tuesday."
+      "content": "Another common fix is to move the `fetchData` function outside the component if it doesn't rely on component props or state other than `userId`.",
+      "prompt_id": 1
     },
     {
-      "prompt_title": "Python Code Challenge: Palindrome",
-      "content": "Here's my solution: `def is_palindrome(s): s = ''.join(filter(str.isalnum, s)).lower(); return s == s[::-1]`"
+      "content": "Definitely add an index! A composite index on `(customer_id, order_date)` would likely be most effective for this specific query.",
+      "prompt_id": 2
     },
     {
-      "prompt_title": "Python Code Challenge: Palindrome",
-      "content": "Don't forget edge cases like empty strings or single characters!"
+      "content": "For small to medium teams, GitHub Flow (main branch + feature branches) is often simpler to manage than Gitflow. Just ensure good PR review practices.",
+      "prompt_id": 3
     },
     {
-      "prompt_title": "Recipe Idea: Quick Weeknight Pasta",
-      "content": "Adding some feta cheese at the end is delicious!"
+      "content": "Flexbox is great for this: `display: flex; align-items: center; justify-content: center;` on the parent container works like a charm.",
+      "prompt_id": 4
     },
     {
-      "prompt_title": "Recipe Idea: Quick Weeknight Pasta",
-      "content": "I like to add spinach and mushrooms too."
+      "content": "Clean and simple! `numbers = [1, 2, 3]; squares = {num: num**2 for num in numbers}`",
+      "prompt_id": 5
     },
     {
-      "prompt_title": "Recipe Idea: Quick Weeknight Pasta",
-      "content": "A squeeze of lemon juice brightens it up."
+      "content": "Don't forget to add a `.dockerignore` file to exclude things like `__pycache__`, `.git`, and virtual environments from being copied into the image. Keeps the image smaller and build faster.",
+      "prompt_id": 6
+    },
+    {
+      "content": "Remember to wrap `await` calls in `try...catch` blocks to handle potential errors from Promises rejecting!",
+      "prompt_id": 7
+    },
+    {
+      "content": "Consistent resource naming is key! Use plural nouns for collections (e.g., `/users`, `/products`) and be consistent with casing (kebab-case or snake_case).",
+      "prompt_id": 8
+    },
+    {
+      "content": "Check the browser's Network tab for the exact CORS error message. On the backend (Django), make sure `django-cors-headers` is installed and configured correctly in `settings.py` with the frontend origin listed in `CORS_ALLOWED_ORIGINS`.",
+      "prompt_id": 9
+    },
+    {
+      "content": "Create a `tests/` directory. Test files should be named `test_*.py` or `*_test.py`. Test functions inside should start with `test_`. Example: `def test_addition(): assert 1 + 1 == 2`. Run with `pytest` in the terminal.",
+      "prompt_id": 10
+    },
+    {
+      "content": "Use basic types for simple values. Use `interface` or `type` for defining the shape of objects. Interfaces are often preferred for objects because they can be extended and implemented by classes, while `type` aliases are more flexible for unions, intersections, etc.",
+      "prompt_id": 11
+    },
+    {
+      "content": "Using `.env` files (with libraries like `python-dotenv` or Node's `dotenv`) is standard practice. Add `.env` to your `.gitignore` file immediately to prevent committing secrets! Access variables via `os.environ.get('VAR_NAME')` (Python) or `process.env.VAR_NAME` (Node.js).",
+      "prompt_id": 12
+    },
+    {
+      "content": "The N+1 problem occurs when you fetch a list of 'parent' objects (1 query), then loop through them and make a separate query for related 'child' objects for *each* parent (N queries). Use `select_related` (for ForeignKey/OneToOne) or `prefetch_related` (for ManyToMany/Reverse ForeignKey) in Django to fetch related objects in the initial query.",
+      "prompt_id": 13
+    },
+    {
+      "content": "Specificity hierarchy: Inline styles > IDs (#id) > Classes (.class), attributes ([attr]), pseudo-classes (:hover) > Elements (div), pseudo-elements (::before). Calculate scores (e.g., 1,0,0 for ID vs 0,1,0 for class). Avoid `!important` if possible; refactor CSS or use more specific selectors.",
+      "prompt_id": 14
+    },
+    {
+      "content": "Virtual environments isolate project dependencies. Project A can use `requests==2.25` while Project B uses `requests==2.28` without conflict. Create: `python -m venv .venv`. Activate (Mac/Linux): `source .venv/bin/activate`. Activate (Windows): `.venv\\Scripts\\activate`.",
+      "prompt_id": 15
+    },
+    {
+      "content": "1. User logs in (POST /login). 2. Server validates credentials, generates JWT (containing user ID, expiry), sends it back. 3. Client stores JWT (localStorage/sessionStorage/memory). 4. Client sends JWT in `Authorization: Bearer <token>` header for protected requests. 5. Server middleware verifies JWT signature & expiry before processing request.",
+      "prompt_id": 16
+    },
+    {
+      "content": "Context API is good for low-frequency updates or simple global state (theme, user auth). Redux/Zustand offer more structure, middleware, and performance optimizations for complex, frequently updating state. Zustand is generally simpler than Redux.",
+      "prompt_id": 17
+    },
+    {
+      "content": "Migrations track DB schema changes in code (like Git for your DB structure). They allow applying changes incrementally (`migrate`), reverting (`migrate previous`), and ensuring all team members/environments have the same schema version. Essential for team collaboration and deployment.",
+      "prompt_id": 18
+    },
+    {
+      "content": "Use semantic HTML (`<nav>`, `<button>`), provide `alt` text for images (`<img alt='description'>`), ensure keyboard navigability (tab order, focus styles), use sufficient color contrast, and label form elements correctly (`<label for='id'>`).",
+      "prompt_id": 19
+    },
+    {
+      "content": "`pwd` shows your current directory. `ls` lists files/folders (use `ls -la` for details). `cd ..` goes up one level. `cd directory_name` enters a directory. `cd ~` or just `cd` goes to your home directory.",
+      "prompt_id": 20
+    },
+    {
+      "content": "`touch file.txt` creates an empty file. `mkdir my_folder` creates a directory. `cp source.txt destination.txt` copies. `mv old_name.txt new_name.txt` renames/moves. `rm file.txt` deletes a file. `rmdir empty_folder` deletes an empty folder (use `rm -r folder_name` for non-empty).",
+      "prompt_id": 21
+    },
+    {
+      "content": "Think of it like nested boxes: Content -> Padding (space inside border) -> Border -> Margin (space outside border). `box-sizing: border-box;` is super useful - it makes the element's total width/height include padding and border, not just the content.",
+      "prompt_id": 22
+    },
+    {
+      "content": "Promises avoid 'callback hell' (deeply nested callbacks). They offer better error handling (`.catch()`) and chaining (`.then()`). `async/await` builds on Promises, making async code look more synchronous and readable.",
+      "prompt_id": 23
+    },
+    {
+      "content": "`INNER JOIN`: Only rows with matches in both tables. `LEFT JOIN`: All rows from the left table, plus matching rows from the right (or NULLs). `RIGHT JOIN`: All rows from the right table, plus matching from left. `FULL OUTER JOIN`: All rows from both tables, with NULLs where no match exists.",
+      "prompt_id": 24
+    },
+    {
+      "content": "`useEffect(() => { /* runs on mount */ return () => { /* runs on unmount */ }; }, []);` (componentDidMount/WillUnmount). `useEffect(() => { /* runs on mount and when dep changes */ }, [dep]);` (componentDidUpdate for specific dependency).",
+      "prompt_id": 25
+    },
+    {
+      "content": "Rate limiting prevents abuse/overload. Token Bucket: Allows bursts, refills tokens over time. Leaky Bucket: Processes requests at a steady rate, queueing/dropping excess. Fixed Window: Counts requests in fixed time intervals (e.g., 100/min), resets counter each interval.",
+      "prompt_id": 26
+    },
+    {
+      "content": "`merge` creates a merge commit, preserving branch history. `rebase` replays commits from your branch onto the target branch, creating a linear history (can rewrite history). Rebase often preferred for feature branches before merging to main to keep history clean; Merge preferred for integrating into shared branches like `main`.",
+      "prompt_id": 27
+    },
+    {
+      "content": "`try:` block contains code that might fail. `except SpecificError:` handles that error type. `else:` runs if `try` succeeds (no exception). `finally:` runs *always*, whether an exception occurred or not (good for cleanup).",
+      "prompt_id": 28
+    },
+    {
+      "content": "WebSockets provide a persistent, bidirectional connection between client and server, unlike HTTP's request/response cycle. Great for real-time features where the server needs to push data to the client without the client constantly polling (chat, notifications, live data feeds).",
+      "prompt_id": 29
+    },
+    {
+      "content": "Fluid grids use relative units like percentages instead of fixed pixels. Flexible images scale within their container (e.g., `max-width: 100%; height: auto;`). Media queries (`@media (max-width: 600px) { ... }`) apply different CSS rules based on screen size, orientation, etc.",
+      "prompt_id": 30
+    },
+    {
+      "content": "Idempotent means making the same request multiple times has the same effect as making it once. `GET`, `PUT`, `DELETE` are typically idempotent. `POST` is not (usually creates a new resource each time). `PATCH` *can* be, but isn't always. Important for safe retries by clients.",
+      "prompt_id": 31
+    },
+    {
+      "content": "CI: Developers merge code frequently, automated builds/tests run on each merge. CD: Automatically deploy validated code changes to production/staging. Benefits: Faster feedback, reduced errors, quicker releases. Tools: GitHub Actions, GitLab CI, Jenkins, CircleCI.",
+      "prompt_id": 32
+    },
+    {
+      "content": "Always use parameterized queries (prepared statements)! ORMs (like Django's) usually do this automatically if used correctly. Avoid string formatting/concatenation to build SQL queries with user input. Sanitize/validate input on the server-side as well.",
+      "prompt_id": 33
+    },
+    {
+      "content": "Flexbox excels at distributing space along a single axis (row or column). Great for navigation bars, aligning items in a container. Grid is designed for 2D layouts (rows AND columns simultaneously). Perfect for overall page structure, complex component layouts.",
+      "prompt_id": 34
+    },
+    {
+      "content": "Generators use `yield` to produce a sequence of values lazily (one at a time) instead of creating a whole list in memory. Much more memory-efficient for large sequences or infinite streams. They create iterator objects.",
+      "prompt_id": 35
+    },
+    {
+      "content": "'Serverless' means the cloud provider manages the underlying infrastructure. You deploy code (functions) that run on demand. Pros: Auto-scaling, pay-per-use. Cons: Cold starts (initial delay), potential vendor lock-in, state management challenges.",
+      "prompt_id": 36
+    },
+    {
+      "content": "`useMemo` memoizes the *result* of a function call (e.g., expensive calculation). `useCallback` memoizes the *function definition* itself. Use them when passing functions/values to optimized child components (`React.memo`) to prevent unnecessary re-renders.",
+      "prompt_id": 37
+    },
+    {
+      "content": "Commit to wrong branch: `git reset HEAD~1` (keep changes), `git stash`, `git checkout correct-branch`, `git stash pop`, commit again. Undo last commit: `git reset --soft HEAD~1` (keep changes staged), `git reset --hard HEAD~1` (discard changes!). Amend last commit message: `git commit --amend`.",
+      "prompt_id": 38
+    },
+    {
+      "content": "Arrays: Fast O(1) index access. Slow O(n) insertion/deletion (except at end). Linked Lists: Slow O(n) index access. Fast O(1) insertion/deletion (if you have the node). Arrays use contiguous memory, Linked Lists use pointers.",
+      "prompt_id": 39
+    },
+    {
+      "content": "`localStorage` persists even after the browser is closed and reopened. `sessionStorage` only lasts for the duration of the browser session (until the tab/window is closed). Both are scoped to the origin (protocol, domain, port). Use `localStorage` for user preferences, `sessionStorage` for temporary session data.",
+      "prompt_id": 40
+    },
+    {
+      "content": "Code runs on the Call Stack. Async operations (timers, API calls) are handed off to Web APIs. When done, their callbacks go to the Callback Queue (or Task Queue). The Event Loop constantly checks if the Call Stack is empty; if so, it moves the first callback from the queue to the stack to be executed. Microtasks (Promises) have a separate queue with higher priority.",
+      "prompt_id": 41
+    },
+    {
+      "content": "Docker Compose uses a YAML file (`docker-compose.yml`) to define and run multi-container Docker applications. Define services (web app, db), networks, volumes. Start everything with `docker-compose up`, stop with `docker-compose down`. Simplifies local setup immensely.",
+      "prompt_id": 42
+    },
+    {
+      "content": "Composite index: Index on multiple columns (`(col_a, col_b)`), useful for queries filtering/sorting on both. Covering index: Includes all columns needed for a query, avoiding table lookup. Partial index: Indexes only a subset of rows based on a condition (`WHERE is_active = true`).",
+      "prompt_id": 43
+    },
+    {
+      "content": "Pseudo-classes (`:hover`, `:focus`, `:nth-child`) select elements based on their *state* or position. Pseudo-elements (`::before`, `::after`, `::first-line`) style a *specific part* of an element or insert content.",
+      "prompt_id": 44
+    },
+    {
+      "content": "Decorators are functions that wrap other functions to add functionality (logging, timing, access control) without modifying the original function's code. The `@decorator` syntax is syntactic sugar for `my_function = decorator(my_function)`.",
+      "prompt_id": 45
+    },
+    {
+      "content": "Basic flow: 1. User clicks 'Login with X'. 2. App redirects to Auth Server. 3. User logs in, grants permission. 4. Auth Server redirects back to App with an authorization code. 5. App sends code + client secret to Auth Server. 6. Auth Server returns access token. 7. App uses token to access Resource Server (API).",
+      "prompt_id": 46
+    },
+    {
+      "content": "`createContext` creates a context object. `Provider` component wraps part of your tree and accepts a `value` prop. `useContext` hook reads the value from the nearest matching `Provider` above it. Good for global state that doesn't change often.",
+      "prompt_id": 47
+    },
+    {
+      "content": "Semantic elements give meaning to content for browsers, screen readers (accessibility!), and search engines (SEO). `<nav>` clearly defines navigation, `<article>` defines self-contained content. Better than generic `<div>` soup!",
+      "prompt_id": 48
+    },
+    {
+      "content": "Hashing is one-way (can't get original data back), used for verifying integrity/passwords (store hash, compare hash). Encryption is two-way (can decrypt with key), used for confidentiality (protecting data itself).",
+      "prompt_id": 49
+    },
+    {
+      "content": "Microservices break down a large application into smaller, independent services, each running its own process and communicating over a network (often HTTP APIs). Contrasts with monolith (all code in one deployable unit). Pros: Independent scaling/deployment, tech diversity. Cons: Complexity (network, distributed data), operational overhead.",
+      "prompt_id": 50
     }
   ]
 }

@@ -3,7 +3,7 @@ import secrets
 import random
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
-from django.core.validators import MaxLengthValidator, MinLengthValidator, RegexValidator
+from django.core.validators import MaxLengthValidator, MinLengthValidator
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
@@ -21,14 +21,17 @@ def generate_username():
     return f"{random.choice(adjectives)}-{random.choice(nouns)}"
 
 def validate_tags(tags):
-    """Validator for the tags array field."""
+    """Validator for the tags array field (Model Level)."""
+    if tags is None: # Handle null case if needed
+        return
     if len(tags) > 10:
         raise ValidationError(_('Maximum of 10 tags allowed.'))
-    tag_regex = RegexValidator(r'^[a-zA-Z0-9-]+$', _('Tags can only contain letters, numbers, and hyphens.'))
     for tag in tags:
+        # Basic type/length check at model level is okay
+        if not isinstance(tag, str):
+             raise ValidationError(_('Tags must be strings.'))
         if len(tag) > 30:
-            raise ValidationError(_('Each tag must be 30 characters or less.'))
-        tag_regex(tag) # Validate individual tag format
+            raise ValidationError(_('Each tag must be 30 characters or less (before cleaning).'))
 
 # --- Models ---
 
@@ -36,7 +39,7 @@ class Prompt(models.Model):
     prompt_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=150, blank=False, null=False)
     content = models.TextField(max_length=15000, blank=False, null=False)
-    username = models.CharField(max_length=50, blank=True, null=True, editable=False) # editable=False makes it non-updatable via ModelForms/Admin
+    username = models.CharField(max_length=50, blank=True, null=True) # --- REMOVE editable=False ---
     tags = ArrayField(
         models.CharField(max_length=30),
         size=10,
@@ -87,7 +90,7 @@ class Comment(models.Model):
     comment_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     prompt = models.ForeignKey(Prompt, on_delete=models.CASCADE, related_name='comments')
     content = models.TextField(max_length=2000, blank=False, null=False)
-    username = models.CharField(max_length=50, blank=True, null=True, editable=False)
+    username = models.CharField(max_length=50, blank=True, null=True)
     modification_code = models.CharField(
         max_length=8,
         blank=True,

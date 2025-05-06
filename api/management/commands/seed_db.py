@@ -8,7 +8,6 @@ class Command(BaseCommand):
     help = 'Seeds the database with initial data from seed_data.json'
 
     def handle(self, *args, **options):
-        # Get the directory of the current script and join with the filename
         script_dir = os.path.dirname(__file__)
         seed_file_path = os.path.join(script_dir, 'seed_data.json')
 
@@ -19,27 +18,32 @@ class Command(BaseCommand):
         with open(seed_file_path, 'r') as f:
             data = json.load(f)
 
-        # Clear existing data (optional, but recommended for repeatable seeding)
         self.stdout.write("Clearing existing Prompt and Comment data...")
-        Comment.objects.all().delete() # Delete comments first due to FK
+        Comment.objects.all().delete()
         Prompt.objects.all().delete()
         self.stdout.write(self.style.SUCCESS("Existing data cleared."))
 
         prompts_data = data.get('prompts', [])
         comments_data = data.get('comments', [])
-        created_prompts = {} # To map title to prompt object for linking comments
+        # --- CHANGE: Store prompts by their actual DB ID ---
+        created_prompts_by_id = {}
 
         # Create Prompts
         self.stdout.write(f"Creating {len(prompts_data)} prompts...")
+        # --- CHANGE: Keep track of the order/intended ID ---
+        intended_id_counter = 1
         for prompt_data in prompts_data:
             try:
                 prompt = Prompt.objects.create(
                     title=prompt_data['title'],
                     content=prompt_data['content'],
-                    tags=prompt_data.get('tags', []) # Use .get for optional tags
+                    tags=prompt_data.get('tags', [])
                 )
-                created_prompts[prompt.title] = prompt
-                self.stdout.write(f"  Created prompt: {prompt.title}")
+                # --- CHANGE: Map the intended ID (from JSON) to the created prompt object ---
+                # We assume the order in the JSON corresponds to IDs 1, 2, 3...
+                created_prompts_by_id[intended_id_counter] = prompt
+                self.stdout.write(f"  Created prompt (Intended ID {intended_id_counter}): {prompt.title}")
+                intended_id_counter += 1
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"  Error creating prompt '{prompt_data.get('title', 'N/A')}': {e}"))
         self.stdout.write(self.style.SUCCESS("Prompts created."))
@@ -47,11 +51,14 @@ class Command(BaseCommand):
         # Create Comments
         self.stdout.write(f"Creating {len(comments_data)} comments...")
         for comment_data in comments_data:
-            prompt_title = comment_data.get('prompt_title')
-            prompt_instance = created_prompts.get(prompt_title)
+            # --- CHANGE: Get the prompt_id from the JSON data ---
+            prompt_id_from_json = comment_data.get('prompt_id')
+            # --- CHANGE: Look up the prompt object using the ID ---
+            prompt_instance = created_prompts_by_id.get(prompt_id_from_json)
 
             if not prompt_instance:
-                self.stdout.write(self.style.WARNING(f"  Skipping comment: Prompt '{prompt_title}' not found or wasn't created."))
+                # --- CHANGE: Update warning message ---
+                self.stdout.write(self.style.WARNING(f"  Skipping comment: Prompt with intended ID '{prompt_id_from_json}' not found or wasn't created."))
                 continue
 
             try:
@@ -59,8 +66,10 @@ class Command(BaseCommand):
                     prompt=prompt_instance,
                     content=comment_data['content']
                 )
-                self.stdout.write(f"  Created comment for: {prompt_title}")
+                # --- CHANGE: Update success message ---
+                self.stdout.write(f"  Created comment for prompt ID {prompt_id_from_json} ('{prompt_instance.title}')")
             except Exception as e:
-                 self.stdout.write(self.style.ERROR(f"  Error creating comment for '{prompt_title}': {e}"))
+                 # --- CHANGE: Update error message ---
+                 self.stdout.write(self.style.ERROR(f"  Error creating comment for prompt ID {prompt_id_from_json}: {e}"))
 
         self.stdout.write(self.style.SUCCESS("Database seeding completed."))

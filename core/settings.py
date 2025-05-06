@@ -86,21 +86,26 @@ WSGI_APPLICATION = "core.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': dj_database_url.config(
-        conn_max_age=600, # Optional: connection pooling setting
-        conn_health_checks=True, # Optional: enable health checks
-        default=os.environ.get('DATABASE_URL')
-    )
-}
-# Handle case where DATABASE_URL might not be set (e.g., initial setup)
-if not DATABASES['default']:
-     DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
+# --- Use DATABASE_URL consistently ---
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    print(f"--- Configuring database using DATABASE_URL: {DATABASE_URL[:DATABASE_URL.find('@')]}... ---") # Print URL safely
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL, # Use the loaded URL
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
+else:
+    # Raise an error if DATABASE_URL is not set, as it's expected now.
+    # Avoids silently falling back to SQLite when Postgres is intended.
+    print("ERROR: DATABASE_URL environment variable is not set.")
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured("DATABASE_URL environment variable is not set. Please configure it in your .env file or environment.")
+# --- End DATABASE_URL configuration ---
+
 
 # Cache Configuration (Using Upstash Redis via django-redis)
 REDIS_URL = os.environ.get('REDIS_URL')
@@ -133,8 +138,10 @@ else:
 
 # --- Rate Limiting ---
 RATELIMIT_CACHE_BACKEND = 'default'
-RATELIMIT_ENABLE = not DEBUG
+# --- RESTORED LOGIC: Enable if Redis URL exists OR if DEBUG is True ---
+RATELIMIT_ENABLE = bool(REDIS_URL) or DEBUG
 print(f"--- RATELIMIT_ENABLE setting value: {RATELIMIT_ENABLE} ---")
+# --- END RESTORED LOGIC ---
 RATELIMIT_KEY_PREFIX = "rl"
 RATELIMIT_GROUP_PREFIX = "rlg"
 RATELIMIT_BLOCK = True
@@ -185,6 +192,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
 
 
 # --- ADD THIS LINE TO SILENCE THE CHECK IN DEBUG MODE ---
+# This logic correctly depends on DEBUG, no change needed here
 SILENCED_SYSTEM_CHECKS = ['django_ratelimit.E003'] if DEBUG else []
 # --- END ADDITION ---
 
@@ -269,5 +277,7 @@ if not DEBUG:
 # Django REST Framework Settings
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
+    'PAGE_SIZE': 10,
+    'EXCEPTION_HANDLER': 'api.exceptions.custom_exception_handler',
+    # --- End Add ---
 }

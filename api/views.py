@@ -3,14 +3,18 @@ from rest_framework import generics, status, views
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied, NotFound, ValidationError
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from django.db.models import Q, Count # <--- Import Count
+from django.db.models.functions import Lower
 from django.db import connection
 from django.db.utils import OperationalError
 from django.utils.decorators import method_decorator
 from rest_framework.pagination import PageNumberPagination
 from django.http import JsonResponse
-from django.core.cache import cache # <<< ADD THIS IMPORT
-import time # <<< ADD THIS IMPORT
+from django.core.cache import cache
+import time
+from rest_framework.reverse import reverse
+import uuid # Import the uuid module
+
 
 # Import models and serializers
 from .models import Prompt, Comment
@@ -36,46 +40,69 @@ def ratelimited_error(request, exception):
     )
 # --- END ADDITION ---
 
-# --- ADD THIS TEST VIEW ---
+# --- Cache Test View (Corrected) ---
 class CacheTestView(views.APIView):
+
     def get(self, request, *args, **kwargs):
-        cache_key = "my_test_key"
-        current_time = time.time()
+        """Handles GET requests to retrieve a value from the cache."""
+        key = request.query_params.get('key')
+        if not key:
+            return Response({'error': 'Missing key query parameter'}, status=status.HTTP_400_BAD_REQUEST)
+
+        value = cache.get(key)
+        if value is not None:
+            return Response({'status': 'Cache hit', 'key': key, 'value': value}, status=status.HTTP_200_OK)
+        else:
+            return Response({'status': 'Cache miss', 'key': key}, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        """Handles POST requests to set a value in the cache."""
+        key = request.data.get('key')
+        value = request.data.get('value')
+
+        if not key or value is None: # Check if value is None explicitly
+            return Response({'error': 'Missing key or value in request body'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
-            # Try to set a value
-            cache.set(cache_key, f"Cache set at {current_time}", timeout=60)
-            # Try to get the value
-            retrieved_value = cache.get(cache_key)
-            # Try atomic increment (required by ratelimit)
-            incr_key = "my_incr_key"
-            try:
-                count = cache.incr(incr_key)
-                incr_status = f"Increment successful, count: {count}"
-            except ValueError:
-                # If key doesn't exist, incr might raise ValueError. Set it first.
-                cache.set(incr_key, 0, timeout=60)
-                count = cache.incr(incr_key)
-                incr_status = f"Increment successful after setting, count: {count}"
-
-
-            return Response({
-                "status": "Cache test successful",
-                "set_value": f"Cache set at {current_time}",
-                "retrieved_value": retrieved_value,
-                "increment_status": incr_status,
-            }, status=status.HTTP_200_OK)
+            # Set with a default timeout (e.g., 5 minutes)
+            cache.set(key, value, timeout=300)
+            return Response({'status': 'Cache set', 'key': key, 'value': value}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            # Catch any exception during cache operations
+            # Catch potential cache backend errors
             return Response({
-                "status": "Cache test failed",
+                "status": "Cache set failed",
                 "error": str(e),
                 "error_type": type(e).__name__
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-# --- END TEST VIEW ---
 
+    def delete(self, request, *args, **kwargs):
+        """Handles DELETE requests to remove a key from the cache."""
+        key = request.query_params.get('key')
+        if not key:
+            return Response({'error': 'Missing key query parameter'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if key exists before deleting for a more informative response
+        exists = cache.has_key(key) # Use has_key or check if get(key) is not None
+
+        if exists:
+            try:
+                cache.delete(key)
+                return Response({'status': 'Cache deleted', 'key': key}, status=status.HTTP_200_OK)
+            except Exception as e:
+                 # Catch potential cache backend errors
+                return Response({
+                    "status": "Cache delete failed",
+                    "error": str(e),
+                    "error_type": type(e).__name__
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            # Key doesn't exist, return success but indicate it wasn't found
+            return Response({'status': 'Cache key not found or already deleted', 'key': key}, status=status.HTTP_200_OK)
+
+# --- END Cache Test View ---
 
 # --- Custom Pagination ---
-class StandardResultsSetPagination(PageNumberPagination): # <<< Definition was already here
+class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'limit'
     max_page_size = 100
@@ -83,7 +110,7 @@ class StandardResultsSetPagination(PageNumberPagination): # <<< Definition was a
 # --- Prompt Views ---
 @method_decorator(ratelimit(key='ip', rate='50/d', method='POST', block=True), name='dispatch')
 class PromptListCreateView(generics.ListCreateAPIView):
-    queryset = Prompt.objects.all().order_by('-updated_at')
+    queryset = Prompt.objects.all() # Keep uncommented as per original code
     pagination_class = StandardResultsSetPagination
 
     def get_serializer_class(self):
@@ -106,10 +133,15 @@ class PromptListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         """Optionally filter and sort the queryset."""
-        queryset = super().get_queryset()
+        # Start with the base queryset and annotate
+        # NOTE: Using .all() here again, consistent with original structure,
+        # but applying annotation. If class queryset is used, adjust accordingly.
+        queryset = Prompt.objects.annotate(
+            comment_count=Count('comments') # <--- Add annotation here
+        )
         search_query = self.request.query_params.get('search', None)
         tags_query = self.request.query_params.get('tags', None)
-        sort_query = self.request.query_params.get('sort', None)
+        sort_query = self.request.query_params.get('sort', 'updated_at_desc')
 
         # Search
         if search_query:
@@ -117,31 +149,35 @@ class PromptListCreateView(generics.ListCreateAPIView):
                 Q(title__icontains=search_query) | Q(content__icontains=search_query)
             )
 
-        # Filter by Tags (using raw SQL fragment via .extra())
+        # Filter by Tags
         if tags_query:
             tags_list = [tag.strip() for tag in tags_query.split(',') if tag.strip()]
             if tags_list:
-                # Use .extra() to add a WHERE clause with the && operator
-                # Django will handle parameterization safely (%s)
-                queryset = queryset.extra(where=['tags && %s'], params=[tags_list])
+                # --- CORRECTED FILTERING ---
+                # Use the ORM's __overlap lookup instead of .extra()
+                queryset = queryset.filter(tags__overlap=tags_list)
+                # --- END CORRECTION ---
 
-        # Sort
-        if sort_query:
-            sort_map = {
-                'title_asc': 'title',
-                'title_desc': '-title',
-                'updated_at_asc': 'updated_at',
-                'updated_at_desc': '-updated_at',
-            }
-            sort_field = sort_map.get(sort_query.lower())
-            if sort_field:
-                 queryset = queryset.order_by(sort_field)
+        # Sort (Apply default or query param)
+        sort_map = {
+            'title_asc': Lower('title').asc(),
+            'title_desc': Lower('title').desc(),
+            'updated_at_asc': 'updated_at',
+            'updated_at_desc': '-updated_at',
+        }
+        ordering = sort_map.get(sort_query.lower())
+
+        if ordering:
+             queryset = queryset.order_by(ordering)
+        # else:
+        #     queryset = queryset.order_by('-updated_at')
 
         return queryset
 
 # Apply decorator for PromptDetailView update/delete
 @method_decorator(ratelimit(key='ip', rate='50/d', method=['PUT', 'PATCH', 'DELETE'], block=True), name='dispatch')
 class PromptDetailView(generics.RetrieveUpdateDestroyAPIView):
+    # ... (Keep ALL existing PromptDetailView code exactly the same) ...
     queryset = Prompt.objects.all()
     serializer_class = PromptSerializer
     lookup_field = 'prompt_id'
@@ -150,75 +186,105 @@ class PromptDetailView(generics.RetrieveUpdateDestroyAPIView):
         """Checks if the provided modification code matches the instance's code."""
         code = request.data.get('modification_code')
         if not code:
-            raise ValidationError({"modification_code": "This field is required."})
-        # Compare the provided code with the instance's field value
-        if instance.modification_code != code: # <<< CORRECTED LINE
-            # PREVIOUSLY: if not instance.check_modification_code(code):
-            raise PermissionDenied("Invalid modification code.")
+            # --- CORRECTED LINE ---
+            # Raise PermissionDenied for missing code (results in 403)
+            raise PermissionDenied("Modification code is required.")
+            # --- END CORRECTION ---
+        if instance.modification_code != code:
+            raise PermissionDenied("Invalid modification code") # Keep this for wrong code
+
+    def _get_comment_pagination_url(self, page_number, request):
+        if not page_number:
+            return None
+        try:
+            base_url = reverse('api:comment-list-create', kwargs={'prompt_id': self.kwargs['prompt_id']}, request=request)
+            return f"{base_url}?page={page_number}"
+        except Exception as e:
+            print(f"Error reversing comment URL: {e}")
+            return None
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         try:
+            # This will now raise PermissionDenied for missing OR wrong code
             self.check_modification_code(request, instance)
-        except (ValidationError, PermissionDenied) as e:
-            if isinstance(e, PermissionDenied):
-                 return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
-            raise e
-
+        except PermissionDenied as e: # Catch only PermissionDenied
+             return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
         if 'username' in request.data:
             mutable_data = request.data.copy()
             mutable_data.pop('username', None)
             request._full_data = mutable_data
-
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
-
-        comments_queryset = instance.comments.all()[:10]
-        comment_serializer = CommentSerializer(comments_queryset, many=True)
+        comments_queryset = instance.comments.all()
+        paginator = StandardResultsSetPagination()
+        page = paginator.paginate_queryset(comments_queryset, request, view=self)
+        if page is not None:
+            comment_serializer = CommentSerializer(page, many=True)
+            comments_data = {
+                'count': paginator.page.paginator.count,
+                'next': self._get_comment_pagination_url(paginator.page.next_page_number() if paginator.page.has_next() else None, request),
+                'previous': self._get_comment_pagination_url(paginator.page.previous_page_number() if paginator.page.has_previous() else None, request),
+                'results': comment_serializer.data
+            }
+        else:
+             comment_serializer = CommentSerializer(comments_queryset, many=True)
+             comments_data = {
+                'count': comments_queryset.count(),
+                'next': None,
+                'previous': None,
+                'results': comment_serializer.data
+             }
         response_data = serializer.data
-        response_data['comments'] = comment_serializer.data
-        total_comments = instance.comments.count()
-        response_data['comment_pagination'] = {
-            'total_count': total_comments,
-            'page_size': 10,
-            'has_more': total_comments > 10
-        }
+        response_data['comments'] = comments_data
+        response_data.pop('comment_pagination', None)
         return Response(response_data)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         try:
+            # This will now raise PermissionDenied for missing OR wrong code
             self.check_modification_code(request, instance)
-        except (ValidationError, PermissionDenied) as e:
-            if isinstance(e, PermissionDenied):
-                 return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
-            return Response({"detail": "Modification code is required."}, status=status.HTTP_403_FORBIDDEN)
-
+        except PermissionDenied as e: # Catch only PermissionDenied
+            return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        comments_queryset = instance.comments.all()[:10]
-        comment_serializer = CommentSerializer(comments_queryset, many=True)
         prompt_serializer = self.get_serializer(instance)
         prompt_data = prompt_serializer.data
-        prompt_data['comments'] = comment_serializer.data
-        total_comments = instance.comments.count()
-        prompt_data['comment_pagination'] = {
-            'total_count': total_comments,
-            'page_size': 10,
-            'has_more': total_comments > 10
-        }
+        comments_queryset = instance.comments.all()
+        paginator = StandardResultsSetPagination()
+        page = paginator.paginate_queryset(comments_queryset, request, view=self)
+        if page is not None:
+            comment_serializer = CommentSerializer(page, many=True)
+            next_page_num_for_helper = paginator.page.next_page_number() if paginator.page.has_next() else None
+            comments_data = {
+                'count': paginator.page.paginator.count,
+                'next': self._get_comment_pagination_url(next_page_num_for_helper, request),
+                'previous': self._get_comment_pagination_url(paginator.page.previous_page_number() if paginator.page.has_previous() else None, request),
+                'results': comment_serializer.data
+            }
+        else:
+             comment_serializer = CommentSerializer(comments_queryset, many=True)
+             comments_data = {
+                'count': comments_queryset.count(),
+                'next': None,
+                'previous': None,
+                'results': comment_serializer.data
+             }
+        prompt_data['comments'] = comments_data
+        prompt_data.pop('comment_pagination', None)
         return Response(prompt_data)
 
 
 # --- Comment Views ---
+# ... (Keep ALL existing Comment Views code exactly the same) ...
 @method_decorator(ratelimit(key='ip', rate='50/d', method='POST', block=True), name='dispatch')
 class CommentListCreateView(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
@@ -254,51 +320,46 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
         """Checks if the provided modification code matches the instance's code."""
         code = request.data.get('modification_code')
         if not code:
-            raise ValidationError({"modification_code": "This field is required."})
-        # Compare the provided code with the instance's field value
-        if instance.modification_code != code: # <<< CORRECTED LINE
-            # PREVIOUSLY: if not instance.check_modification_code(code):
-            raise PermissionDenied("Invalid modification code.")
+            # --- CORRECTED LINE ---
+            # Raise PermissionDenied for missing code (results in 403)
+            raise PermissionDenied("Modification code is required.")
+            # --- END CORRECTION ---
+        if instance.modification_code != code:
+            raise PermissionDenied("Invalid modification code.") # Keep this for wrong code
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         try:
+            # This will now raise PermissionDenied for missing OR wrong code
             self.check_modification_code(request, instance)
-        except (ValidationError, PermissionDenied) as e:
-            if isinstance(e, PermissionDenied):
-                 return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
-            raise e
-
+        except PermissionDenied as e: # Catch only PermissionDenied
+             return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
         if 'username' in request.data:
             mutable_data = request.data.copy()
             mutable_data.pop('username', None)
             request._full_data = mutable_data
-
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
-
         response_data = serializer.data
         return Response(response_data)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         try:
+            # This will now raise PermissionDenied for missing OR wrong code
             self.check_modification_code(request, instance)
-        except (ValidationError, PermissionDenied) as e:
-            if isinstance(e, PermissionDenied):
-                 return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
-            return Response({"detail": "Modification code is required."}, status=status.HTTP_403_FORBIDDEN)
-
+        except PermissionDenied as e: # Catch only PermissionDenied
+             return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # --- Tag View ---
+# ... (Keep ALL existing TagListView code exactly the same) ...
 class TagListView(views.APIView):
     def get(self, request, *args, **kwargs):
         all_tags_lists = Prompt.objects.exclude(tags__isnull=True).exclude(tags__len=0).values_list('tags', flat=True)
@@ -312,6 +373,7 @@ class TagListView(views.APIView):
 
 # --- Other Views ---
 class RandomPromptView(views.APIView):
+    # Keep original logic exactly as provided
     def get(self, request, *args, **kwargs):
         random_prompt = Prompt.objects.order_by('?').first()
         if not random_prompt:
@@ -319,10 +381,11 @@ class RandomPromptView(views.APIView):
 
         comments_queryset = random_prompt.comments.all()[:10]
         comment_serializer = CommentSerializer(comments_queryset, many=True)
-        prompt_serializer = PromptSerializer(random_prompt)
+        prompt_serializer = PromptSerializer(random_prompt) # Use original serializer
         prompt_data = prompt_serializer.data
-        prompt_data['comments'] = comment_serializer.data
+        prompt_data['comments'] = comment_serializer.data # Use original comment handling
         total_comments = random_prompt.comments.count()
+        # Keep original pagination structure for this view
         prompt_data['comment_pagination'] = {
             'total_count': total_comments,
             'page_size': 10,
@@ -336,13 +399,36 @@ class BatchPromptView(views.APIView):
         serializer = PromptBatchIdSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        prompt_ids = serializer.validated_data['ids']
-        prompts = Prompt.objects.filter(prompt_id__in=prompt_ids)
+
+        # Get the list of strings from the validated data
+        potential_ids = serializer.validated_data.get('ids', [])
+
+        # --- Filter for valid UUIDs ---
+        valid_prompt_ids = []
+        for item in potential_ids:
+            try:
+                # Attempt to convert string to UUID
+                valid_uuid = uuid.UUID(item)
+                valid_prompt_ids.append(valid_uuid)
+            except (ValueError, TypeError):
+                # Ignore items that are not valid UUID strings
+                continue
+        # --- End Filter ---
+
+        # If no valid UUIDs remain after filtering, return empty list
+        if not valid_prompt_ids:
+            return Response([], status=status.HTTP_200_OK)
+
+        # Filter and annotate using only the valid UUIDs
+        prompts = Prompt.objects.filter(prompt_id__in=valid_prompt_ids).annotate(
+            comment_count=Count('comments')
+        )
         response_serializer = PromptListSerializer(prompts, many=True)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
 
 # --- Root API View ---
+# ... (Keep ALL existing ApiRootView code exactly the same) ...
 class ApiRootView(views.APIView):
     def get(self, request, *args, **kwargs):
         db_status = "ok"
