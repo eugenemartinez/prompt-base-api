@@ -17,8 +17,8 @@ import uuid # Import the uuid module
 
 
 # Import models and serializers
-from .models import Prompt, Comment
-from .serializers import (
+from .models import Prompt, Comment # Ensure these are imported
+from .serializers import ( # Ensure these are imported
     PromptSerializer,
     PromptListSerializer,
     CommentSerializer,
@@ -108,9 +108,9 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100
 
 # --- Prompt Views ---
-@method_decorator(ratelimit(key='ip', rate='50/d', method='POST', block=True), name='dispatch')
+@method_decorator(ratelimit(key='ip', rate='5/d', method='POST', block=True), name='dispatch') # Keep original rate limit
 class PromptListCreateView(generics.ListCreateAPIView):
-    queryset = Prompt.objects.all() # Keep uncommented as per original code
+    queryset = Prompt.objects.all()
     pagination_class = StandardResultsSetPagination
 
     def get_serializer_class(self):
@@ -119,6 +119,15 @@ class PromptListCreateView(generics.ListCreateAPIView):
         return PromptListSerializer
 
     def create(self, request, *args, **kwargs):
+        # --- ADD HARD LIMIT CHECK FOR PROMPTS ---
+        PROMPT_ROW_LIMIT = 5
+        if Prompt.objects.count() >= PROMPT_ROW_LIMIT:
+            return Response(
+                {"detail": f"Cannot create new prompt. The system has reached its maximum capacity of {PROMPT_ROW_LIMIT} prompts."},
+                status=status.HTTP_403_FORBIDDEN # Or status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        # --- END HARD LIMIT CHECK ---
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -284,7 +293,6 @@ class PromptDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # --- Comment Views ---
-# ... (Keep ALL existing Comment Views code exactly the same) ...
 @method_decorator(ratelimit(key='ip', rate='50/d', method='POST', block=True), name='dispatch')
 class CommentListCreateView(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
@@ -296,6 +304,15 @@ class CommentListCreateView(generics.ListCreateAPIView):
         return Comment.objects.filter(prompt_id=prompt_id)
 
     def create(self, request, *args, **kwargs):
+        # --- ADD HARD LIMIT CHECK FOR COMMENTS ---
+        COMMENT_ROW_LIMIT = 5
+        if Comment.objects.count() >= COMMENT_ROW_LIMIT:
+            return Response(
+                {"detail": f"Cannot create new comment. The system has reached its maximum capacity of {COMMENT_ROW_LIMIT} comments."},
+                status=status.HTTP_403_FORBIDDEN # Or status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        # --- END HARD LIMIT CHECK ---
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
