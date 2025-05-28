@@ -14,7 +14,7 @@ from django.core.cache import cache
 import time
 from rest_framework.reverse import reverse
 import uuid # Import the uuid module
-
+import os # <--- Import os
 
 # Import models and serializers
 from .models import Prompt, Comment # Ensure these are imported
@@ -27,6 +27,13 @@ from .serializers import ( # Ensure these are imported
 
 # Import rate limiting decorators
 from django_ratelimit.decorators import ratelimit
+
+# --- Define a single global rate limit from environment variable ---
+# Defaulting to a high rate for easier testing if not set.
+# Adjust the default '1000/s' as needed for your typical non-testing scenario,
+# or rely on setting it in .env for production/staging.
+GLOBAL_API_RATE = os.environ.get('GLOBAL_API_RATE_LIMIT', '1000/s')
+print(f"--- GLOBAL_API_RATE set to: {GLOBAL_API_RATE} ---") # For verification
 
 # --- ratelimited_error function ---
 def ratelimited_error(request, exception):
@@ -110,7 +117,7 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100
 
 # --- Prompt Views ---
-@method_decorator(ratelimit(key='ip', rate='5/d', method='POST', block=True), name='dispatch') # Keep original rate limit
+@method_decorator(ratelimit(key='ip', rate=GLOBAL_API_RATE, method='POST', block=True), name='dispatch')
 class PromptListCreateView(generics.ListCreateAPIView):
     queryset = Prompt.objects.all()
     pagination_class = StandardResultsSetPagination
@@ -186,7 +193,7 @@ class PromptListCreateView(generics.ListCreateAPIView):
         return queryset
 
 # Apply decorator for PromptDetailView update/delete
-@method_decorator(ratelimit(key='ip', rate='50/d', method=['PUT', 'PATCH', 'DELETE'], block=True), name='dispatch')
+@method_decorator(ratelimit(key='ip', rate=GLOBAL_API_RATE, method=['PUT', 'PATCH', 'DELETE'], block=True), name='dispatch')
 class PromptDetailView(generics.RetrieveUpdateDestroyAPIView):
     # ... (Keep ALL existing PromptDetailView code exactly the same) ...
     queryset = Prompt.objects.all()
@@ -295,7 +302,7 @@ class PromptDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # --- Comment Views ---
-@method_decorator(ratelimit(key='ip', rate='50/d', method='POST', block=True), name='dispatch')
+@method_decorator(ratelimit(key='ip', rate=GLOBAL_API_RATE, method='POST', block=True), name='dispatch')
 class CommentListCreateView(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
     pagination_class = StandardResultsSetPagination
@@ -329,7 +336,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
         prompt = get_object_or_404(Prompt, prompt_id=prompt_id)
         serializer.save(prompt=prompt)
 
-@method_decorator(ratelimit(key='ip', rate='50/d', method=['PUT', 'PATCH', 'DELETE'], block=True), name='dispatch')
+@method_decorator(ratelimit(key='ip', rate=GLOBAL_API_RATE, method=['PUT', 'PATCH', 'DELETE'], block=True), name='dispatch')
 class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
