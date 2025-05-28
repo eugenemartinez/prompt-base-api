@@ -35,7 +35,9 @@ def ratelimited_error(request, exception):
     """
     # You can customize the response format if needed
     return JsonResponse(
-        {'detail': 'Request was throttled.'},
+        # --- UPDATE THE DETAIL MESSAGE ---
+        {'detail': 'You have made too many requests in a short period. Please try again later.'},
+        # --- END UPDATE ---
         status=status.HTTP_429_TOO_MANY_REQUESTS
     )
 # --- END ADDITION ---
@@ -120,7 +122,7 @@ class PromptListCreateView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         # --- ADD HARD LIMIT CHECK FOR PROMPTS ---
-        PROMPT_ROW_LIMIT = 5
+        PROMPT_ROW_LIMIT = 500
         if Prompt.objects.count() >= PROMPT_ROW_LIMIT:
             return Response(
                 {"detail": f"Cannot create new prompt. The system has reached its maximum capacity of {PROMPT_ROW_LIMIT} prompts."},
@@ -305,7 +307,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         # --- ADD HARD LIMIT CHECK FOR COMMENTS ---
-        COMMENT_ROW_LIMIT = 5
+        COMMENT_ROW_LIMIT = 500
         if Comment.objects.count() >= COMMENT_ROW_LIMIT:
             return Response(
                 {"detail": f"Cannot create new comment. The system has reached its maximum capacity of {COMMENT_ROW_LIMIT} comments."},
