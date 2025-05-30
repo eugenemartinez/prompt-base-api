@@ -9,7 +9,7 @@ from django.db import connection
 from django.db.utils import OperationalError
 from django.utils.decorators import method_decorator
 from rest_framework.pagination import PageNumberPagination
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse # Add this import
 from django.core.cache import cache
 import time
 from rest_framework.reverse import reverse
@@ -476,5 +476,13 @@ class ApiRootView(views.APIView):
 
         response_status = status.HTTP_200_OK if db_status == "ok" else status.HTTP_503_SERVICE_UNAVAILABLE
         return Response(status_data, status=response_status)
+
+# --- ADD THE NEW ROOT VIEW FUNCTION ---
+def project_root_view(request):
+    """
+    A simple view for the project root.
+    """
+    return HttpResponse("Welcome to the PromptBase API!", content_type="text/plain")
+# --- END ADDITION ---
 
 # End of views.py

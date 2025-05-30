@@ -18,6 +18,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings # Import settings
+from api import views as api_views # Import the views from your api app
 
 # Define base URL patterns (always active)
 urlpatterns = [
@@ -29,5 +30,11 @@ if settings.DEBUG:
     urlpatterns += [
         path('admin/', admin.site.urls),
     ]
+
+urlpatterns += [
+    # --- ADD THE NEW ROOT URL PATTERN ---
+    path('', api_views.project_root_view, name='project-root'),
+    # --- END ADDITION ---
+]
 
 # Make sure no other code follows this urlpatterns definition
